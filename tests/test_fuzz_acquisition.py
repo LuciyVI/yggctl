@@ -8,14 +8,14 @@ from unittest.mock import Mock
 import urllib.parse
 import zipfile
 
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, strategies as st
 
 from atlas import catalogue, protocol
 from core import Failure, logged
-from fuzz_support import OfflineFuzzCase
+from fuzz_support import OfflineFuzzCase, fuzz_profile
 
 
-PROFILE = settings(max_examples=80, derandomize=True, database=None, deadline=None)
+PROFILE = fuzz_profile(max_examples=80)
 KEY = st.binary(min_size=32, max_size=32).map(bytes.hex)
 LABEL = st.text(alphabet=string.ascii_lowercase, min_size=1, max_size=12)
 TEXT = st.text(alphabet=string.ascii_letters + string.digits, min_size=1, max_size=16)

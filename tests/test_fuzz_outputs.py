@@ -9,15 +9,15 @@ from html.parser import HTMLParser
 import json
 from typing import Any
 
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, strategies as st
 
 from atlas import viewer
 from core import Failure, logged
-from fuzz_support import OfflineFuzzCase
+from fuzz_support import OfflineFuzzCase, fuzz_profile
 import telemetry
 
 
-PROFILE = settings(max_examples=100, derandomize=True, database=None, deadline=1000)
+PROFILE = fuzz_profile(deadline=1000)
 TEXT = st.text(max_size=256)
 JSON_SCALAR = st.one_of(
     st.none(), st.booleans(), st.integers(min_value=-10**9, max_value=10**9), st.text(max_size=80)

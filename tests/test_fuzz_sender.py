@@ -5,14 +5,13 @@ import hashlib
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, strategies as st
 
 from core import Failure
-from fuzz_support import OfflineFuzzCase
+from fuzz_support import OfflineFuzzCase, PROFILE
 import simplex_sender as sender
 
 
-PROFILE = settings(max_examples=100, derandomize=True, database=None, deadline=None)
 TEXT = st.text(max_size=48)
 EVENT = st.text(min_size=1, max_size=128)
 NUMBER = st.integers(-(2**63), 2**63 - 1)

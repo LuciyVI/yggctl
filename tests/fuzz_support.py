@@ -1,12 +1,23 @@
 """Isolation guards shared by the synthetic, offline fuzz/property tests."""
 
+import os
 import unittest
 from unittest.mock import patch
 
 from hypothesis import settings
 
 
-PROFILE = settings(max_examples=100, derandomize=True, database=None, deadline=None)
+def fuzz_profile(max_examples=100, deadline=None):
+    """Keep ordinary runs deterministic; the plateau runner supplies replay seeds."""
+    return settings(
+        max_examples=max_examples,
+        derandomize=os.environ.get("YGGCTL_FUZZ_RANDOMIZE") != "1",
+        database=None,
+        deadline=deadline,
+    )
+
+
+PROFILE = fuzz_profile()
 
 
 class OfflineFuzzCase(unittest.TestCase):

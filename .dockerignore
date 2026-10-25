@@ -8,6 +8,9 @@
 !yggctl/**
 !tests/
 !tests/**
+!tools/
+!tools/docker_tests.py
+!tools/fuzz_plateau.py
 
 **/__pycache__/
 **/*.py[cod]

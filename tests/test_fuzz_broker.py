@@ -10,14 +10,13 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, strategies as st
 
 import broker
 from core import Failure, logged
-from fuzz_support import OfflineFuzzCase
+from fuzz_support import OfflineFuzzCase, PROFILE
 
 
-PROFILE = settings(max_examples=100, derandomize=True, database=None, deadline=None)
 LOCAL_METHODS = ("getself", "getpeers", "gettree", "getpaths", "getsessions")
 DEBUG_METHODS = ("debug_remotegetself", "debug_remotegetpeers", "debug_remotegettree")
 REMOTE_METHODS = (*DEBUG_METHODS, "getnodeinfo")

@@ -20,8 +20,9 @@ RUN python3 -m pip install --no-cache-dir -r requirements-dev.txt \
 COPY pyproject.toml ./
 COPY yggctl/ ./yggctl/
 COPY tests/ ./tests/
+COPY tools/ ./tools/
 
 USER tester:tester
 
-ENTRYPOINT ["python3", "-B", "-m", "pytest"]
+ENTRYPOINT ["python3", "-B", "tools/docker_tests.py"]
 CMD ["-q", "-p", "no:cacheprovider", "tests/test_fuzz_cli.py", "tests/test_fuzz_peer_inputs.py", "tests/test_fuzz_broker.py", "tests/test_fuzz_acquisition.py", "tests/test_fuzz_archives.py", "tests/test_fuzz_state_io.py", "tests/test_fuzz_outputs.py", "tests/test_fuzz_sender.py"]

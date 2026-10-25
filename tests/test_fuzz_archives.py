@@ -6,14 +6,14 @@ import tarfile
 from types import SimpleNamespace
 from unittest.mock import Mock, patch
 
-from hypothesis import given, settings, strategies as st
+from hypothesis import given, strategies as st
 
 from core import Failure, FILES, KEYS, NODE, STACK, TIMER, digest, logged
-from fuzz_support import OfflineFuzzCase
+from fuzz_support import OfflineFuzzCase, fuzz_profile
 import recovery
 
 
-PROFILE = settings(max_examples=60, derandomize=True, database=None, deadline=None)
+PROFILE = fuzz_profile(max_examples=60)
 REQUIRED = tuple("config/" + name for name in FILES) + tuple(
     "units/" + name for name in (NODE, STACK, TIMER, "ygg-metrics.service")
 )

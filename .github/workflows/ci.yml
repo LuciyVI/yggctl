@@ -7,13 +7,29 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: Docker test suite (fuzz properties or all Pytest tests)
+        description: Docker mode (coverage plateau, one fuzz pass, or all tests)
         required: true
-        default: fuzz
+        default: plateau
         type: choice
         options:
+          - plateau
           - fuzz
           - all
+      test_node:
+        description: Exact offline fuzz test node ID (plateau mode only)
+        required: false
+        default: tests/test_fuzz_broker.py::BrokerFuzzProperties::test_request_claims_cannot_widen_parent_role
+        type: string
+      plateau_minutes:
+        description: Stop after this many minutes without new coverage
+        required: false
+        default: '120'
+        type: string
+      max_minutes:
+        description: Independent total session limit (up to 300 minutes)
+        required: false
+        default: '240'
+        type: string
 
 permissions:
   contents: read
@@ -100,10 +116,13 @@ jobs:
     name: Docker tests (manual)
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: ${{ (inputs.suite == 'fuzz' || inputs.suite == 'all') && 20 || 330 }}
     env:
       IMAGE_TAG: yggctl-tests:${{ github.sha }}
-      TEST_SUITE: ${{ inputs.suite || 'fuzz' }}
+      TEST_SUITE: ${{ inputs.suite || 'plateau' }}
+      TEST_NODE: ${{ inputs.test_node || 'tests/test_fuzz_broker.py::BrokerFuzzProperties::test_request_claims_cannot_widen_parent_role' }}
+      PLATEAU_MINUTES: ${{ inputs.plateau_minutes || '120' }}
+      MAX_MINUTES: ${{ inputs.max_minutes || '240' }}
     steps:
       - name: Check out selected revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -113,9 +132,24 @@ jobs:
         timeout-minutes: 10
         run: docker build --tag "$IMAGE_TAG" .
       - name: Run selected tests without network
-        timeout-minutes: 10
+        timeout-minutes: ${{ (inputs.suite == 'fuzz' || inputs.suite == 'all') && 10 || 315 }}
         run: |
           case "$TEST_SUITE" in
+            plateau)
+              if [[ ! "$PLATEAU_MINUTES" =~ ^[0-9]{1,3}$ || ! "$MAX_MINUTES" =~ ^[0-9]{1,3}$ ]]; then
+                printf '%s\n' 'Time limits must be positive integer minutes' >&2
+                exit 2
+              fi
+              plateau_minutes=$((10#$PLATEAU_MINUTES))
+              max_minutes=$((10#$MAX_MINUTES))
+              if (( plateau_minutes < 1 || plateau_minutes > max_minutes || max_minutes > 300 )); then
+                printf '%s\n' 'Require 1 <= plateau_minutes <= max_minutes <= 300' >&2
+                exit 2
+              fi
+              pytest_args=(plateau --test "$TEST_NODE"
+                --plateau-seconds "$((plateau_minutes * 60))"
+                --max-seconds "$((max_minutes * 60))")
+              ;;
             fuzz) pytest_args=() ;;
             all) pytest_args=(-q -p no:cacheprovider) ;;
             *) printf '%s\n' 'Unsupported test suite' >&2; exit 2 ;;
