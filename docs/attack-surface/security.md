@@ -7,6 +7,10 @@ commit [`920cde54c7795e0a02e087f22313ffef37167c4d`](https://github.com/Justsomeb
 It records entry points, assets, trust boundaries and defensive review priorities.
 It does not establish a vulnerability, exploitability or deployment readiness.
 
+The accompanying [offline fuzz/property tests](FUZZING.md) document interface
+contracts with bounded synthetic inputs. They were authored without execution;
+their presence is not test-result or vulnerability evidence.
+
 The review is static. No installed node, listener, effective systemd policy,
 firewall or live message delivery was tested. The repository contains the
 console, synthetic tests and documentation; the node, decoder, installer,
