@@ -6,6 +6,10 @@ This is experimental reference source. There is no supported stable release or
 security-update SLA. Testing the source does not qualify a host deployment.
 See [operational limitations](docs/SECURITY.md) before running commands.
 
+For the source-level entry points, assets and trust boundaries, see the
+[attack-surface map](docs/attack-surface/security.md). Its review priorities
+are not confirmed vulnerabilities or qualification of an installed host.
+
 ## Reporting
 
 Report bugs and security concerns through
