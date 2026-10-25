@@ -100,6 +100,38 @@ An explicit `/usr/bin/python3` alias supports existing child-process fixtures.
 The base image tag and direct development pins do not constitute an immutable
 image digest or a complete transitive dependency lock.
 
+## GitHub Actions
+
+The existing [Source quality and regressions workflow](../../.github/workflows/ci.yml)
+has a manual Docker job on `sec/fuzzing`. It builds this Dockerfile on an
+Ubuntu 24.04 GitHub-hosted runner, then runs the selected suite without network,
+with a read-only filesystem and temporary storage in `/tmp`. The job has a
+20-minute timeout and container CPU/memory/process limits. It uses read-only
+repository permissions and does not publish the image or deploy anything.
+
+In the fork, open **Actions → Source quality and regressions → Run workflow**:
+
+1. Select branch **sec/fuzzing**. The unchanged `main` version uses the original
+   source-quality workflow, not this Docker configuration.
+2. Select **fuzz** for the eight new modules (default), or **all** for complete
+   Pytest discovery, if the UI displays the suite input.
+3. Click **Run workflow** to start the build and tests.
+
+This uses the existing workflow file because it is already registered on the
+default branch. If the branch-selection UI shows only the default branch's old
+input form, the selected `sec/fuzzing` revision falls back to `fuzz`. With an
+authenticated GitHub CLI, the explicit equivalent is:
+
+```sh
+gh workflow run ci.yml --repo LuciyVI/yggctl --ref sec/fuzzing -f suite=fuzz
+```
+
+Use `-f suite=all` to select the complete suite. These are instructions for a
+later operator-triggered run; no workflow was dispatched for this change.
+Pushing `sec/fuzzing` alone does not start the Docker job. The existing
+non-manual source-quality job continues to run on pushes to `main` and pull
+requests; manual dispatch on the modified branch selects only the Docker job.
+
 Keep any later result tied to its exact source SHA, interpreter, dependency
 versions and finite generation settings. Authored properties and a passing
 bounded run are different evidence; neither proves absence of vulnerabilities.

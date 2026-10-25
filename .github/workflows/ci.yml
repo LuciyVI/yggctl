@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Docker test suite (fuzz properties or all Pytest tests)
+        required: true
+        default: fuzz
+        type: choice
+        options:
+          - fuzz
+          - all
 
 permissions:
   contents: read
@@ -19,6 +28,7 @@ defaults:
 
 jobs:
   regression:
+    if: ${{ github.event_name != 'workflow_dispatch' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     env:
@@ -85,3 +95,33 @@ jobs:
                   print(f'[{index}/9] PASS processed={index}/9 remaining={9-index} elapsed={time.monotonic()-start:.1f}s', flush=True)
           print(f'[done] processed=9/9 errors=0 remaining=0 elapsed={time.monotonic()-start:.1f}s')
           PY
+
+  docker-tests:
+    name: Docker tests (manual)
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      IMAGE_TAG: yggctl-tests:${{ github.sha }}
+      TEST_SUITE: ${{ inputs.suite || 'fuzz' }}
+    steps:
+      - name: Check out selected revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build test image
+        timeout-minutes: 10
+        run: docker build --tag "$IMAGE_TAG" .
+      - name: Run selected tests without network
+        timeout-minutes: 10
+        run: |
+          case "$TEST_SUITE" in
+            fuzz) pytest_args=() ;;
+            all) pytest_args=(-q -p no:cacheprovider) ;;
+            *) printf '%s\n' 'Unsupported test suite' >&2; exit 2 ;;
+          esac
+          docker run --rm --network none --read-only \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --pids-limit 256 --memory 2g --cpus 2 \
+            --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
+            "$IMAGE_TAG" "${pytest_args[@]}"
