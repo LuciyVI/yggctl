@@ -1,0 +1,20 @@
+# Only test configuration, source and fixtures belong in the build context.
+**
+!Dockerfile
+!.dockerignore
+!requirements-dev.txt
+!pyproject.toml
+!yggctl/
+!yggctl/**
+!tests/
+!tests/**
+
+**/__pycache__/
+**/*.py[cod]
+**/.pytest_cache/
+**/.hypothesis/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.coverage*
+**/.env
+**/.env.*

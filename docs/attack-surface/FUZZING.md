@@ -60,6 +60,46 @@ PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -B -m pytest -q -p no:cacheprovider \
   tests/test_fuzz_outputs.py tests/test_fuzz_sender.py
 ```
 
+## Docker runner
+
+The repository [Dockerfile](../../Dockerfile) packages Python 3.14, the existing
+development requirements and test sources. The default command selects the eight
+fuzz modules above. It runs as an unprivileged user, disables plugin autoload and
+bytecode/Pytest caches, and keeps Hypothesis storage under `/tmp`.
+The [build-context allowlist](../../.dockerignore) excludes repository history,
+local environments and unrelated files. No host source or service mount is needed.
+
+The image was not built or run as part of this change. Build it from the repository
+root; the build requires access to the Python image registry and package index:
+
+```sh
+docker build -t yggctl-tests .
+```
+
+Run the default fuzz properties with the installed dependencies and no network:
+
+```sh
+docker run --rm --network none --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 yggctl-tests
+```
+
+Arguments after the image replace the default Pytest options and module list.
+For example, run one module by appending
+`-q -p no:cacheprovider tests/test_fuzz_broker.py` to that command.
+To select all tests discovered by the repository's Pytest configuration:
+
+```sh
+docker run --rm --network none --read-only \
+  --tmpfs /tmp:rw,nosuid,nodev,size=512m,mode=1777 \
+  yggctl-tests -q -p no:cacheprovider
+```
+
+The full suite additionally uses local child processes, Unix sockets and Linux
+`/proc` fixtures inside the container. It does not provision a live node.
+An explicit `/usr/bin/python3` alias supports existing child-process fixtures.
+The base image tag and direct development pins do not constitute an immutable
+image digest or a complete transitive dependency lock.
+
 Keep any later result tied to its exact source SHA, interpreter, dependency
 versions and finite generation settings. Authored properties and a passing
 bounded run are different evidence; neither proves absence of vulnerabilities.
